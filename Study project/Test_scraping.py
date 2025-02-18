@@ -1,12 +1,17 @@
-import os
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import re
+import os
 
+def sanitize_filename(filename):
+    return re.sub(r'[\\/*?:"<>|]', "", filename)
+
+save_path_img = "C:/Resume/Test Case DA/Study project/Book_Images"
 current_page = 1
 data = []
 prosed = True
-when_to_stop = 100
+when_to_stop = 20
 
 while len(data) < when_to_stop and prosed:
     
@@ -32,7 +37,16 @@ while len(data) < when_to_stop and prosed:
             item["Price"] = book.find("p", class_="price_color").text[2:]
             item["Stock"] = book.find("p", class_="instock availability").text.strip()
             
+            name_img = book.find("h3").text
+            link_img = "https://books.toscrape.com/catalogue/" + book.find("img").attrs["src"]
+            
+            sanitized_name = sanitize_filename(name_img.replace(' ', '-'))
+            
+            with open(os.path.join(save_path_img, sanitized_name + ".png"), "wb") as f:
+                im = requests.get(link_img)
+                f.write(im.content)
             data.append(item)
+            
     current_page += 1
 prosed = False
 df = pd.DataFrame(data)
@@ -40,4 +54,4 @@ df = pd.DataFrame(data)
 df.index = df.index + 1
 df.index.name = "No"
 
-df.to_excel("C:/Resume/Test Case DA/Study project/Books.xlsx")
+df.to_excel("C:/Resume/Test Case DA/Study project/Exel table/Books.xlsx")
